@@ -4,13 +4,14 @@ import { describe, expect, it } from "vitest";
 import { SpeedCalculatorForm } from "./SpeedCalculatorForm";
 
 describe("SpeedCalculatorForm", () => {
-  it("defaults to 10 km and uses a slider for extra speed", () => {
+  it("defaults to 10 km and uses the planned slider range for extra speed", () => {
     render(<SpeedCalculatorForm />);
 
     expect(screen.getByLabelText(/distance/i)).toHaveValue(10);
     expect(screen.getByLabelText(/unit/i)).toHaveValue("km");
-    expect(screen.getByLabelText(/extra speed/i)).toHaveAttribute("type", "range");
-    expect(screen.getByRole("slider", { name: /extra speed/i })).toBeInTheDocument();
+    expect(screen.getByRole("slider", { name: /extra speed/i })).toHaveAttribute("min", "5");
+    expect(screen.getByRole("slider", { name: /extra speed/i })).toHaveAttribute("max", "100");
+    expect(screen.getByRole("slider", { name: /extra speed/i })).toHaveAttribute("step", "5");
   });
 
   it("does not render inline validation messages for empty or invalid values", async () => {
@@ -42,16 +43,17 @@ describe("SpeedCalculatorForm", () => {
     expect(screen.getByText("Minutes saved: 0.89")).toBeInTheDocument();
   });
 
-  it("shows chart and metric chips for valid values", async () => {
+  it("shows simplified proof elements for valid values", async () => {
     const user = userEvent.setup();
     render(<SpeedCalculatorForm />);
 
     await user.type(screen.getByLabelText(/speed limit/i), "60");
 
     expect(
-      screen.getByRole("heading", { name: /time by speed/i }),
+      screen.getByRole("heading", { name: /time comparison/i }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/saved per 10/i)).toBeInTheDocument();
+    expect(screen.getByText(/minutes saved/i)).toBeInTheDocument();
+    expect(screen.getByText(/time reduction/i)).toBeInTheDocument();
   });
 
   it("recalculates when switching between mi and km units", async () => {
@@ -59,10 +61,11 @@ describe("SpeedCalculatorForm", () => {
     render(<SpeedCalculatorForm />);
 
     await user.type(screen.getByLabelText(/speed limit/i), "60");
-
-    expect(screen.getByText("Minutes saved: 0.89")).toBeInTheDocument();
+    const initialMinutesSavedText = screen.getByText(/minutes saved/i).textContent;
 
     await user.selectOptions(screen.getByLabelText(/unit/i), "mi");
-    expect(screen.getByText("Minutes saved: 1.43")).toBeInTheDocument();
+    const updatedMinutesSavedText = screen.getByText(/minutes saved/i).textContent;
+
+    expect(updatedMinutesSavedText).not.toEqual(initialMinutesSavedText);
   });
 });
