@@ -34,13 +34,13 @@ describe("SpeedCalculatorForm", () => {
     expect(screen.queryAllByRole("alert")).toHaveLength(0);
   });
 
-  it("shows a deterministic formatted minutes saved value for valid values", async () => {
+  it("shows exact saved time in seconds when gain is below one minute", async () => {
     const user = userEvent.setup();
     render(<SpeedCalculatorForm />);
 
     await user.type(screen.getByLabelText(/speed limit/i), "60");
 
-    expect(screen.getByText("Minutes saved: 0.89")).toBeInTheDocument();
+    expect(screen.getByText("Time saved: 53.26 sec")).toBeInTheDocument();
   });
 
   it("shows simplified proof elements for valid values", async () => {
@@ -50,12 +50,26 @@ describe("SpeedCalculatorForm", () => {
     await user.type(screen.getByLabelText(/speed limit/i), "60");
 
     expect(
-      screen.getByRole("heading", { name: /time comparison/i }),
+      screen.getByRole("heading", { name: /trip insights/i }),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/minutes saved:/i, { selector: ".primary-result" }),
+      screen.getByText(/time saved:/i, { selector: ".primary-result" }),
     ).toBeInTheDocument();
     expect(screen.getByText(/time reduction/i, { selector: "h4" })).toBeInTheDocument();
+    expect(
+      screen.queryByText(/you are pushing harder for about/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows exact saved time in minutes and seconds when gain reaches at least one minute", async () => {
+    const user = userEvent.setup();
+    render(<SpeedCalculatorForm />);
+
+    await user.clear(screen.getByLabelText(/distance/i));
+    await user.type(screen.getByLabelText(/distance/i), "20");
+    await user.type(screen.getByLabelText(/speed limit/i), "60");
+
+    expect(screen.getByText("Time saved: 1 min 46.52 sec")).toBeInTheDocument();
   });
 
   it("recalculates when switching between mi and km units", async () => {
@@ -63,12 +77,12 @@ describe("SpeedCalculatorForm", () => {
     render(<SpeedCalculatorForm />);
 
     await user.type(screen.getByLabelText(/speed limit/i), "60");
-    const initialMinutesSavedText = screen.getByText(/minutes saved:/i, {
+    const initialMinutesSavedText = screen.getByText(/time saved:/i, {
       selector: ".primary-result",
     }).textContent;
 
     await user.selectOptions(screen.getByLabelText(/unit/i), "mi");
-    const updatedMinutesSavedText = screen.getByText(/minutes saved:/i, {
+    const updatedMinutesSavedText = screen.getByText(/time saved:/i, {
       selector: ".primary-result",
     }).textContent;
 

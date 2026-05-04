@@ -4,10 +4,6 @@ import {
   type DistanceUnit,
 } from "../lib/timeMath";
 import { MetricChips } from "../../visualization/components/MetricChips";
-import {
-  TimeSavingsChart,
-  type TimeSavingsPoint,
-} from "../../visualization/components/TimeSavingsChart";
 
 interface FormValues {
   distance: string;
@@ -22,6 +18,26 @@ const MIN_POSITIVE_VALUE = 0.1;
 const MIN_EXTRA_SPEED = 5;
 const MAX_EXTRA_SPEED = 100;
 const EXTRA_SPEED_STEP = 5;
+
+function formatTruncated(value: number): string {
+  const truncated = Math.trunc(value * 100) / 100;
+  return truncated.toFixed(2).replace(/\.?0+$/, "");
+}
+
+function formatSavedTime(minutesSaved: number): string {
+  const totalSeconds = minutesSaved * 60;
+  if (totalSeconds < 60) {
+    return `${formatTruncated(totalSeconds)} sec`;
+  }
+
+  const wholeMinutes = Math.trunc(totalSeconds / 60);
+  const secondsLeft = totalSeconds - wholeMinutes * 60;
+  if (secondsLeft <= 0) {
+    return `${wholeMinutes} min`;
+  }
+
+  return `${wholeMinutes} min ${formatTruncated(secondsLeft)} sec`;
+}
 
 function parsePositiveNumber(value: string): number | null {
   if (value.trim() === "") {
@@ -69,28 +85,7 @@ export function SpeedCalculatorForm() {
     });
   }, [parsedDistance, parsedSpeedLimit, parsedExtraSpeed, values.unit]);
 
-  const chartPoints = useMemo<TimeSavingsPoint[]>(() => {
-    if (
-      result === null ||
-      parsedSpeedLimit === null ||
-      parsedExtraSpeed === null
-    ) {
-      return [];
-    }
-
-    return [
-      {
-        label: "Legal speed",
-        speed: parsedSpeedLimit,
-        minutes: result.legalMinutes,
-      },
-      {
-        label: "Your speed",
-        speed: parsedSpeedLimit + parsedExtraSpeed,
-        minutes: result.fasterMinutes,
-      },
-    ];
-  }, [parsedExtraSpeed, parsedSpeedLimit, result]);
+  const savedTimeLabel = result === null ? "" : formatSavedTime(result.minutesSaved);
 
   function handleNumberChange(field: NumberField) {
     return (event: ChangeEvent<HTMLInputElement>) => {
@@ -169,13 +164,12 @@ export function SpeedCalculatorForm() {
 
       {result !== null ? (
         <>
-          <p className="primary-result">Minutes saved: {result.minutesSaved.toFixed(2)}</p>
+          <p className="primary-result">Time saved: {savedTimeLabel}</p>
           <MetricChips
-            minutesSaved={result.minutesSaved}
+            savedTimeLabel={savedTimeLabel}
             percentImprovement={result.percentImprovement}
-          />
-          <TimeSavingsChart
-            points={chartPoints}
+            legalSpeed={parsedSpeedLimit ?? 0}
+            fasterSpeed={result.actualSpeed}
             speedUnitLabel={values.unit === "mi" ? "mph" : "km/h"}
           />
         </>
