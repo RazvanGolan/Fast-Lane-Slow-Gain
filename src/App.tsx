@@ -33,7 +33,7 @@ export default function App() {
           </div>
         </div>
         <p className="hero-subtitle">
-          Compare legal speed and faster driving to see your actual time difference.
+          Real numbers on how much time speeding saves. Spoiler: probably less than you think.
         </p>
       </header>
 
