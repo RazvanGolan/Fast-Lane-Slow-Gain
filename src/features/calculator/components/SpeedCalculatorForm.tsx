@@ -3,6 +3,8 @@ import {
   calculateTimeSavings,
   type DistanceUnit,
 } from "../lib/timeMath";
+import { MetricChips } from "../../visualization/components/MetricChips";
+import { TimeSavingsChart } from "../../visualization/components/TimeSavingsChart";
 
 interface FormValues {
   distance: string;
@@ -106,6 +108,25 @@ export function SpeedCalculatorForm() {
       unit: values.unit,
     });
   }, [parsedDistance, parsedSpeedLimit, parsedExtraSpeed, values.unit]);
+
+  const chartPoints = useMemo(() => {
+    if (
+      result === null ||
+      parsedSpeedLimit === null ||
+      parsedExtraSpeed === null
+    ) {
+      return [];
+    }
+
+    const speeds = [0, 1, 2, 3]
+      .map((multiplier) => parsedSpeedLimit + parsedExtraSpeed * multiplier)
+      .filter((speed, index, allSpeeds) => speed > 0 && allSpeeds.indexOf(speed) === index);
+
+    return speeds.map((speed) => ({
+      speed,
+      minutes: (result.legalMinutes * parsedSpeedLimit) / speed,
+    }));
+  }, [parsedExtraSpeed, parsedSpeedLimit, result]);
 
   function handleNumberChange(field: NumberField) {
     return (event: ChangeEvent<HTMLInputElement>) => {
@@ -220,7 +241,21 @@ export function SpeedCalculatorForm() {
         </div>
       </form>
 
-      {result !== null ? <p>Minutes saved: {result.minutesSaved.toFixed(2)}</p> : null}
+      {result !== null ? (
+        <>
+          <p>Minutes saved: {result.minutesSaved.toFixed(2)}</p>
+          <MetricChips
+            minutesSaved={result.minutesSaved}
+            percentImprovement={result.percentImprovement}
+            savedPer10Units={result.savedPer10Units}
+            unit={values.unit}
+          />
+          <TimeSavingsChart
+            points={chartPoints}
+            speedUnitLabel={values.unit === "mi" ? "mph" : "km/h"}
+          />
+        </>
+      ) : null}
     </section>
   );
 }

@@ -59,6 +59,20 @@ describe("SpeedCalculatorForm", () => {
     expect(screen.getByText("Minutes saved: 4.29")).toBeInTheDocument();
   });
 
+  it("shows chart and metric chips for valid values", async () => {
+    const user = userEvent.setup();
+    render(<SpeedCalculatorForm />);
+
+    await user.type(screen.getByLabelText(/distance/i), "30");
+    await user.type(screen.getByLabelText(/speed limit/i), "60");
+    await user.type(screen.getByLabelText(/extra speed/i), "10");
+
+    expect(
+      screen.getByRole("heading", { name: /time by speed/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/saved per 10/i)).toBeInTheDocument();
+  });
+
   it("recalculates when switching between mi and km units", async () => {
     const user = userEvent.setup();
     render(<SpeedCalculatorForm />);
