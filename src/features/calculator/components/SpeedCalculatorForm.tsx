@@ -1,8 +1,10 @@
 import { useMemo, useState, type ChangeEvent } from "react";
+import { motion } from "framer-motion";
 import {
   calculateTimeSavings,
   type DistanceUnit,
 } from "../lib/timeMath";
+import { useReducedMotion } from "../../experience/hooks/useReducedMotion";
 import { MetricChips } from "../../visualization/components/MetricChips";
 import { TimeSavingsChart } from "../../visualization/components/TimeSavingsChart";
 
@@ -75,6 +77,7 @@ export function SpeedCalculatorForm() {
     speedLimit: false,
     extraSpeed: false,
   });
+  const prefersReducedMotion = useReducedMotion();
 
   const parsedDistance = parsePositiveNumber(values.distance);
   const parsedSpeedLimit = parsePositiveNumber(values.speedLimit);
@@ -243,7 +246,12 @@ export function SpeedCalculatorForm() {
 
       {result !== null ? (
         <>
-          <p>Minutes saved: {result.minutesSaved.toFixed(2)}</p>
+          <motion.p
+            initial={prefersReducedMotion ? false : { opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            Minutes saved: {result.minutesSaved.toFixed(2)}
+          </motion.p>
           <MetricChips
             minutesSaved={result.minutesSaved}
             percentImprovement={result.percentImprovement}
