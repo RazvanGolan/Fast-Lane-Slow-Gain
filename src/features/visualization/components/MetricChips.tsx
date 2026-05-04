@@ -16,9 +16,9 @@ export function MetricChips({
   const distanceLabel = unit === "mi" ? "mi" : "km";
 
   return (
-    <section aria-label="Savings metrics">
+    <section className="metrics-panel" aria-label="Savings metrics">
       <h3>Key metrics</h3>
-      <ul>
+      <ul className="metric-list">
         <li>Trip savings: {minutesSaved.toFixed(2)} min</li>
         <li>Time cut: {(percentImprovement * 100).toFixed(1)}%</li>
         <li>

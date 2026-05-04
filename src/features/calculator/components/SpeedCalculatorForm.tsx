@@ -15,27 +15,11 @@ interface FormValues {
   unit: DistanceUnit;
 }
 
-interface TouchedFields {
-  distance: boolean;
-  speedLimit: boolean;
-  extraSpeed: boolean;
-}
+type NumberField = "distance" | "speedLimit" | "extraSpeed";
 
-type NumberField = keyof TouchedFields;
-
-const MIN_POSITIVE_VALUE = Number.EPSILON;
-
-const FIELD_LABELS: Record<NumberField, string> = {
-  distance: "Distance",
-  speedLimit: "Speed limit",
-  extraSpeed: "Extra speed",
-};
-
-const FIELD_ERROR_IDS: Record<NumberField, string> = {
-  distance: "distance-error",
-  speedLimit: "speedLimit-error",
-  extraSpeed: "extraSpeed-error",
-};
+const MIN_POSITIVE_VALUE = 0.1;
+const MIN_EXTRA_SPEED = 1;
+const MAX_EXTRA_SPEED = 50;
 
 function parsePositiveNumber(value: string): number | null {
   if (value.trim() === "") {
@@ -50,50 +34,22 @@ function parsePositiveNumber(value: string): number | null {
   return parsedValue;
 }
 
-function getInlineError(label: string, value: string): string | null {
-  if (value.trim() === "") {
-    return `${label} is required.`;
-  }
-
-  return parsePositiveNumber(value) === null
-    ? `${label} must be a positive number.`
-    : null;
-}
-
 function isDistanceUnit(value: string): value is DistanceUnit {
   return value === "mi" || value === "km";
 }
 
 export function SpeedCalculatorForm() {
   const [values, setValues] = useState<FormValues>({
-    distance: "",
+    distance: "10",
     speedLimit: "",
-    extraSpeed: "",
-    unit: "mi",
-  });
-
-  const [touched, setTouched] = useState<TouchedFields>({
-    distance: false,
-    speedLimit: false,
-    extraSpeed: false,
+    extraSpeed: "10",
+    unit: "km",
   });
   const prefersReducedMotion = useReducedMotion();
 
   const parsedDistance = parsePositiveNumber(values.distance);
   const parsedSpeedLimit = parsePositiveNumber(values.speedLimit);
   const parsedExtraSpeed = parsePositiveNumber(values.extraSpeed);
-
-  const errors = {
-    distance: touched.distance
-      ? getInlineError(FIELD_LABELS.distance, values.distance)
-      : null,
-    speedLimit: touched.speedLimit
-      ? getInlineError(FIELD_LABELS.speedLimit, values.speedLimit)
-      : null,
-    extraSpeed: touched.extraSpeed
-      ? getInlineError(FIELD_LABELS.extraSpeed, values.extraSpeed)
-      : null,
-  };
 
   const result = useMemo(() => {
     if (
@@ -138,20 +94,10 @@ export function SpeedCalculatorForm() {
     };
   }
 
-  function handleNumberBlur(field: NumberField) {
-    return () => {
-      setTouched((currentTouched) =>
-        currentTouched[field]
-          ? currentTouched
-          : { ...currentTouched, [field]: true },
-      );
-    };
-  }
-
   return (
     <section aria-label="Speed calculator">
-      <form>
-        <div>
+      <form className="calculator-form">
+        <div className="field-group">
           <label htmlFor="distance">Distance</label>
           <input
             id="distance"
@@ -161,20 +107,10 @@ export function SpeedCalculatorForm() {
             step="any"
             value={values.distance}
             onChange={handleNumberChange("distance")}
-            onBlur={handleNumberBlur("distance")}
-            aria-invalid={errors.distance !== null}
-            aria-describedby={
-              errors.distance !== null ? FIELD_ERROR_IDS.distance : undefined
-            }
           />
-          {errors.distance !== null ? (
-            <p id={FIELD_ERROR_IDS.distance} role="alert">
-              {errors.distance}
-            </p>
-          ) : null}
         </div>
 
-        <div>
+        <div className="field-group">
           <label htmlFor="speedLimit">Speed limit</label>
           <input
             id="speedLimit"
@@ -184,43 +120,25 @@ export function SpeedCalculatorForm() {
             step="any"
             value={values.speedLimit}
             onChange={handleNumberChange("speedLimit")}
-            onBlur={handleNumberBlur("speedLimit")}
-            aria-invalid={errors.speedLimit !== null}
-            aria-describedby={
-              errors.speedLimit !== null ? FIELD_ERROR_IDS.speedLimit : undefined
-            }
           />
-          {errors.speedLimit !== null ? (
-            <p id={FIELD_ERROR_IDS.speedLimit} role="alert">
-              {errors.speedLimit}
-            </p>
-          ) : null}
         </div>
 
-        <div>
+        <div className="field-group">
           <label htmlFor="extraSpeed">Extra speed</label>
           <input
             id="extraSpeed"
             name="extraSpeed"
-            type="number"
-            min={MIN_POSITIVE_VALUE}
-            step="any"
+            type="range"
+            min={MIN_EXTRA_SPEED}
+            max={MAX_EXTRA_SPEED}
+            step={1}
             value={values.extraSpeed}
             onChange={handleNumberChange("extraSpeed")}
-            onBlur={handleNumberBlur("extraSpeed")}
-            aria-invalid={errors.extraSpeed !== null}
-            aria-describedby={
-              errors.extraSpeed !== null ? FIELD_ERROR_IDS.extraSpeed : undefined
-            }
           />
-          {errors.extraSpeed !== null ? (
-            <p id={FIELD_ERROR_IDS.extraSpeed} role="alert">
-              {errors.extraSpeed}
-            </p>
-          ) : null}
+          <p className="slider-value">+{values.extraSpeed}</p>
         </div>
 
-        <div>
+        <div className="field-group">
           <label htmlFor="unit">Unit</label>
           <select
             id="unit"

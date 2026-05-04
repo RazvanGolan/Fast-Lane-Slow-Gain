@@ -37,9 +37,10 @@ export function TimeSavingsChart({ points, speedUnitLabel }: TimeSavingsChartPro
     .join(" ");
 
   return (
-    <section aria-label="Time by speed chart">
+    <section className="chart-panel" aria-label="Time by speed chart">
       <h3>Time by speed</h3>
       <svg
+        className="chart-svg"
         role="img"
         aria-label={`Travel minutes by speed in ${speedUnitLabel}`}
         viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
@@ -60,7 +61,7 @@ export function TimeSavingsChart({ points, speedUnitLabel }: TimeSavingsChartPro
         />
         <polyline fill="none" stroke="currentColor" strokeWidth={2} points={polylinePoints} />
       </svg>
-      <ul>
+      <ul className="chart-list">
         {points.map((point) => (
           <li key={point.speed}>
             {point.speed.toFixed(0)} {speedUnitLabel}: {point.minutes.toFixed(2)} min
