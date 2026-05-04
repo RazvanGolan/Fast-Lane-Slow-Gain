@@ -157,7 +157,7 @@ export function SpeedCalculatorForm() {
             }}
           >
             <option value="mi">mi/mph</option>
-            <option value="km">km/km/h</option>
+            <option value="km">km/h</option>
           </select>
         </div>
       </form>

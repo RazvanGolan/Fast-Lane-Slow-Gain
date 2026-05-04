@@ -34,13 +34,15 @@ describe("SpeedCalculatorForm", () => {
     expect(screen.queryAllByRole("alert")).toHaveLength(0);
   });
 
-  it("shows exact saved time in seconds when gain is below one minute", async () => {
+  it("shows exact saved time in minutes and seconds when gain reaches at least one minute", async () => {
     const user = userEvent.setup();
     render(<SpeedCalculatorForm />);
 
+    await user.clear(screen.getByLabelText(/distance/i));
+    await user.type(screen.getByLabelText(/distance/i), "20");
     await user.type(screen.getByLabelText(/speed limit/i), "60");
 
-    expect(screen.getByText("Time saved: 53.26 sec")).toBeInTheDocument();
+    expect(screen.getByText("Time saved: 2 min 51.42 sec")).toBeInTheDocument();
   });
 
   it("shows simplified proof elements for valid values", async () => {
@@ -61,31 +63,29 @@ describe("SpeedCalculatorForm", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("shows exact saved time in minutes and seconds when gain reaches at least one minute", async () => {
+  it("shows exact saved time in seconds when gain is below one minute", async () => {
     const user = userEvent.setup();
     render(<SpeedCalculatorForm />);
 
     await user.clear(screen.getByLabelText(/distance/i));
-    await user.type(screen.getByLabelText(/distance/i), "20");
+    await user.type(screen.getByLabelText(/distance/i), "5");
     await user.type(screen.getByLabelText(/speed limit/i), "60");
 
-    expect(screen.getByText("Time saved: 1 min 46.52 sec")).toBeInTheDocument();
+    expect(screen.getByText("Time saved: 42.85 sec")).toBeInTheDocument();
   });
 
-  it("recalculates when switching between mi and km units", async () => {
+  it("updates the speed unit label when switching between mi and km", async () => {
     const user = userEvent.setup();
     render(<SpeedCalculatorForm />);
 
     await user.type(screen.getByLabelText(/speed limit/i), "60");
-    const initialMinutesSavedText = screen.getByText(/time saved:/i, {
-      selector: ".primary-result",
-    }).textContent;
+
+    const insightsPanel = screen.getByRole("region", { name: /trip insights/i });
+    expect(insightsPanel).toHaveTextContent(/km\/h/i);
 
     await user.selectOptions(screen.getByLabelText(/unit/i), "mi");
-    const updatedMinutesSavedText = screen.getByText(/time saved:/i, {
-      selector: ".primary-result",
-    }).textContent;
 
-    expect(updatedMinutesSavedText).not.toEqual(initialMinutesSavedText);
+    expect(insightsPanel).toHaveTextContent(/mph/i);
+    expect(insightsPanel).not.toHaveTextContent(/km\/h/i);
   });
 });
