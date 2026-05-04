@@ -1,4 +1,5 @@
 export interface TimeSavingsPoint {
+  label: string;
   speed: number;
   minutes: number;
 }
@@ -25,20 +26,21 @@ export function TimeSavingsChart({ points, speedUnitLabel }: TimeSavingsChartPro
   const innerWidth = CHART_WIDTH - CHART_PADDING * 2;
   const innerHeight = CHART_HEIGHT - CHART_PADDING * 2;
 
-  const polylinePoints = points
+  const plottedPoints = points
     .map((point) => {
       const xRatio = maxSpeed === minSpeed ? 0 : (point.speed - minSpeed) / (maxSpeed - minSpeed);
       const yRatio =
         maxMinutes === minMinutes ? 0 : (point.minutes - minMinutes) / (maxMinutes - minMinutes);
       const x = CHART_PADDING + xRatio * innerWidth;
       const y = CHART_HEIGHT - CHART_PADDING - yRatio * innerHeight;
-      return `${x},${y}`;
-    })
-    .join(" ");
+      return { ...point, x, y };
+    });
+
+  const polylinePoints = plottedPoints.map((point) => `${point.x},${point.y}`).join(" ");
 
   return (
-    <section className="chart-panel" aria-label="Time by speed chart">
-      <h3>Time by speed</h3>
+    <section className="chart-panel" aria-label="Time comparison chart">
+      <h3>Time comparison</h3>
       <svg
         className="chart-svg"
         role="img"
@@ -60,14 +62,23 @@ export function TimeSavingsChart({ points, speedUnitLabel }: TimeSavingsChartPro
           stroke="currentColor"
         />
         <polyline fill="none" stroke="currentColor" strokeWidth={2} points={polylinePoints} />
-      </svg>
-      <ul className="chart-list">
-        {points.map((point) => (
-          <li key={point.speed}>
-            {point.speed.toFixed(0)} {speedUnitLabel}: {point.minutes.toFixed(2)} min
-          </li>
+        {plottedPoints.map((point) => (
+          <g key={point.label}>
+            <circle cx={point.x} cy={point.y} r={3} fill="currentColor" />
+            <text x={point.x + 5} y={point.y - 6} fontSize={10} fill="currentColor">
+              {point.label}
+            </text>
+          </g>
         ))}
-      </ul>
+      </svg>
+      <div className="chart-legend">
+        {points.map((point) => (
+          <p key={point.label}>
+            <strong>{point.label}</strong>: {point.speed.toFixed(0)} {speedUnitLabel} ·{" "}
+            {point.minutes.toFixed(2)} min
+          </p>
+        ))}
+      </div>
     </section>
   );
 }

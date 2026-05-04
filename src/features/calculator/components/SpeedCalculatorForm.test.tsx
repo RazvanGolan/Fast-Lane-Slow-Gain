@@ -52,8 +52,10 @@ describe("SpeedCalculatorForm", () => {
     expect(
       screen.getByRole("heading", { name: /time comparison/i }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/minutes saved/i)).toBeInTheDocument();
-    expect(screen.getByText(/time reduction/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/minutes saved:/i, { selector: ".primary-result" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/time reduction/i, { selector: "h4" })).toBeInTheDocument();
   });
 
   it("recalculates when switching between mi and km units", async () => {
@@ -61,10 +63,14 @@ describe("SpeedCalculatorForm", () => {
     render(<SpeedCalculatorForm />);
 
     await user.type(screen.getByLabelText(/speed limit/i), "60");
-    const initialMinutesSavedText = screen.getByText(/minutes saved/i).textContent;
+    const initialMinutesSavedText = screen.getByText(/minutes saved:/i, {
+      selector: ".primary-result",
+    }).textContent;
 
     await user.selectOptions(screen.getByLabelText(/unit/i), "mi");
-    const updatedMinutesSavedText = screen.getByText(/minutes saved/i).textContent;
+    const updatedMinutesSavedText = screen.getByText(/minutes saved:/i, {
+      selector: ".primary-result",
+    }).textContent;
 
     expect(updatedMinutesSavedText).not.toEqual(initialMinutesSavedText);
   });

@@ -1,12 +1,13 @@
 import { useMemo, useState, type ChangeEvent } from "react";
-import { motion } from "framer-motion";
 import {
   calculateTimeSavings,
   type DistanceUnit,
 } from "../lib/timeMath";
-import { useReducedMotion } from "../../experience/hooks/useReducedMotion";
 import { MetricChips } from "../../visualization/components/MetricChips";
-import { TimeSavingsChart } from "../../visualization/components/TimeSavingsChart";
+import {
+  TimeSavingsChart,
+  type TimeSavingsPoint,
+} from "../../visualization/components/TimeSavingsChart";
 
 interface FormValues {
   distance: string;
@@ -18,8 +19,9 @@ interface FormValues {
 type NumberField = "distance" | "speedLimit" | "extraSpeed";
 
 const MIN_POSITIVE_VALUE = 0.1;
-const MIN_EXTRA_SPEED = 1;
-const MAX_EXTRA_SPEED = 50;
+const MIN_EXTRA_SPEED = 5;
+const MAX_EXTRA_SPEED = 100;
+const EXTRA_SPEED_STEP = 5;
 
 function parsePositiveNumber(value: string): number | null {
   if (value.trim() === "") {
@@ -45,7 +47,6 @@ export function SpeedCalculatorForm() {
     extraSpeed: "10",
     unit: "km",
   });
-  const prefersReducedMotion = useReducedMotion();
 
   const parsedDistance = parsePositiveNumber(values.distance);
   const parsedSpeedLimit = parsePositiveNumber(values.speedLimit);
@@ -68,7 +69,7 @@ export function SpeedCalculatorForm() {
     });
   }, [parsedDistance, parsedSpeedLimit, parsedExtraSpeed, values.unit]);
 
-  const chartPoints = useMemo(() => {
+  const chartPoints = useMemo<TimeSavingsPoint[]>(() => {
     if (
       result === null ||
       parsedSpeedLimit === null ||
@@ -77,14 +78,18 @@ export function SpeedCalculatorForm() {
       return [];
     }
 
-    const speeds = [0, 1, 2, 3]
-      .map((multiplier) => parsedSpeedLimit + parsedExtraSpeed * multiplier)
-      .filter((speed, index, allSpeeds) => speed > 0 && allSpeeds.indexOf(speed) === index);
-
-    return speeds.map((speed) => ({
-      speed,
-      minutes: (result.legalMinutes * parsedSpeedLimit) / speed,
-    }));
+    return [
+      {
+        label: "Legal speed",
+        speed: parsedSpeedLimit,
+        minutes: result.legalMinutes,
+      },
+      {
+        label: "Your speed",
+        speed: parsedSpeedLimit + parsedExtraSpeed,
+        minutes: result.fasterMinutes,
+      },
+    ];
   }, [parsedExtraSpeed, parsedSpeedLimit, result]);
 
   function handleNumberChange(field: NumberField) {
@@ -131,7 +136,7 @@ export function SpeedCalculatorForm() {
             type="range"
             min={MIN_EXTRA_SPEED}
             max={MAX_EXTRA_SPEED}
-            step={1}
+            step={EXTRA_SPEED_STEP}
             value={values.extraSpeed}
             onChange={handleNumberChange("extraSpeed")}
           />
@@ -164,17 +169,10 @@ export function SpeedCalculatorForm() {
 
       {result !== null ? (
         <>
-          <motion.p
-            initial={prefersReducedMotion ? false : { opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            Minutes saved: {result.minutesSaved.toFixed(2)}
-          </motion.p>
+          <p className="primary-result">Minutes saved: {result.minutesSaved.toFixed(2)}</p>
           <MetricChips
             minutesSaved={result.minutesSaved}
             percentImprovement={result.percentImprovement}
-            savedPer10Units={result.savedPer10Units}
-            unit={values.unit}
           />
           <TimeSavingsChart
             points={chartPoints}
